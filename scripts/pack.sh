@@ -14,17 +14,27 @@ cd extension
 node build.mjs
 cd ..
 
-# 3. Create the Extension ZIP (The distributable)
-echo "🗜️ Creating Extension ZIP (tabflow-extension.zip)..."
+# 3. Create Chrome ZIP
+echo "🗜️ Creating Chrome ZIP (tabflow-chrome.zip)..."
 cd extension
-zip -r ../tabflow-extension.zip . -x "node_modules/*" ".*" "*.zip" > /dev/null
+cp manifest.json manifest.bak.json
+node -e "const fs = require('fs'); const m = JSON.parse(fs.readFileSync('manifest.json')); delete m.background.scripts; fs.writeFileSync('manifest.json', JSON.stringify(m, null, 2));"
+zip -r ../tabflow-chrome.zip . -x "node_modules/*" "*/node_modules/*" ".*" "*.zip" > /dev/null
+
+# 4. Create Firefox ZIP
+echo "🗜️ Creating Firefox ZIP (tabflow-firefox.zip)..."
+node -e "const fs = require('fs'); const m = JSON.parse(fs.readFileSync('manifest.json')); delete m.background.service_worker; m.background.scripts = ['dist/background.js']; fs.writeFileSync('manifest.json', JSON.stringify(m, null, 2));"
+zip -r ../tabflow-firefox.zip . -x "node_modules/*" "*/node_modules/*" ".*" "*.zip" > /dev/null
+
+# Restore original manifest
+mv manifest.bak.json manifest.json
 cd ..
 
-# 4. Create the Source Code ZIP (Required by Firefox AMO)
+# 5. Create the Source Code ZIP (Required by Firefox AMO)
 echo "🗜️ Creating Source Code ZIP (tabflow-source.zip)..."
-# We zip everything in the root, excluding git, node_modules, and the zips themselves
 zip -r tabflow-source.zip . -x "node_modules/*" "*/node_modules/*" ".git/*" ".DS_Store" "*.zip" ".venv/*" "*/.venv/*" "*/__pycache__/*" > /dev/null
 
 echo "✅ Done!"
-echo "➡️  tabflow-extension.zip : Upload this to Chrome Web Store & Firefox AMO as the main package."
+echo "➡️  tabflow-chrome.zip    : Upload this to the Chrome Web Store."
+echo "➡️  tabflow-firefox.zip   : Upload this to Firefox AMO as the main package."
 echo "➡️  tabflow-source.zip    : Upload this to Firefox AMO in the 'Source Code' field."

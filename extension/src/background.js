@@ -731,7 +731,7 @@ async function applyClustersToTabs(clusters) {
 
 // --- Debugging Helper ---
 // Expose function globally so you can test it directly in the background console
-window.testCluster = async () => {
+globalThis.testCluster = async () => {
     const tabs = await browserAPI.tabs.query({ windowId: browserAPI.windows.WINDOW_ID_CURRENT });
     const clusters = await clusterTabs(tabs);
     console.log("Clusters generated:", clusters);
