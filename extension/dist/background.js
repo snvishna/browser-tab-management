@@ -35510,6 +35510,16 @@ var require_background = __commonJS({
     init_db();
     init_prompts();
     var browserAPI = typeof browser !== "undefined" ? browser : chrome;
+    async function addLog(type, action, status, details) {
+      console.log(`[${type}] ${action} (${status}): ${details}`);
+      const log = { timestamp: Date.now(), type, action, status, details };
+      browserAPI.storage.local.get(["agent_logs"], (res) => {
+        let logs = res.agent_logs || [];
+        logs.unshift(log);
+        if (logs.length > 100) logs = logs.slice(0, 100);
+        browserAPI.storage.local.set({ agent_logs: logs });
+      });
+    }
     async function callAgentAPI(baseUrl, apiKey, model, systemPrompt, userPrompt) {
       let url2 = baseUrl;
       const isAnthropic = url2.includes("anthropic.com") || model.startsWith("claude-");
@@ -35526,6 +35536,7 @@ var require_background = __commonJS({
           temperature: 0.1,
           max_tokens: 4096
         };
+        addLog("API", "callAgentAPI", "pending", `Connecting to Anthropic URL: ${url2} | Model: ${model}`);
         const response = await fetch(url2, {
           method: "POST",
           headers: {
@@ -35538,10 +35549,13 @@ var require_background = __commonJS({
         });
         if (!response.ok) {
           const errBody = await response.text();
-          throw new Error(`Anthropic API Error: ${response.statusText} - ${errBody}`);
+          const errMsg = `Anthropic API Error: ${response.status} ${response.statusText} - ${errBody}`;
+          addLog("API", "callAgentAPI", "error", errMsg);
+          throw new Error(errMsg);
         }
         const data = await response.json();
         const content = data.content[0].text;
+        addLog("API", "callAgentAPI", "success", `Successfully generated response from ${model}`);
         try {
           const jsonStr = content.replace(/```json/gi, "").replace(/```/g, "").trim();
           return JSON.parse(jsonStr);
@@ -35563,6 +35577,7 @@ var require_background = __commonJS({
         if (url2.includes("api.openai.com")) {
           payload.response_format = { type: "json_object" };
         }
+        addLog("API", "callAgentAPI", "pending", `Connecting to OpenAI-compatible URL: ${url2} | Model: ${model}`);
         const response = await fetch(url2, {
           method: "POST",
           headers: {
@@ -35573,10 +35588,13 @@ var require_background = __commonJS({
         });
         if (!response.ok) {
           const errBody = await response.text();
-          throw new Error(`OpenAI API Error: ${response.statusText} - ${errBody}`);
+          const errMsg = `OpenAI API Error: ${response.status} ${response.statusText} - ${errBody}`;
+          addLog("API", "callAgentAPI", "error", errMsg);
+          throw new Error(errMsg);
         }
         const data = await response.json();
         const content = data.choices[0].message.content;
+        addLog("API", "callAgentAPI", "success", `Successfully generated response from ${model}`);
         try {
           const jsonStr = content.replace(/```json/gi, "").replace(/```/g, "").trim();
           return JSON.parse(jsonStr);
