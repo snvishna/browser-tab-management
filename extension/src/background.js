@@ -246,6 +246,16 @@ if (browserAPI.action) {
 // --- Smart Tab Reuse & Deduplication Router ---
 const singleInstanceDomains = ["localhost", "internal.corp.com"];
 
+async function safeRemoveTab(tabId) {
+    try { await browserAPI.tabs.remove(tabId); } catch (e) { /* ignore already closed */ }
+}
+async function safeUpdateTab(tabId, props) {
+    try { await browserAPI.tabs.update(tabId, props); } catch (e) { /* ignore */ }
+}
+async function safeFocusWindow(windowId) {
+    try { await browserAPI.windows.update(windowId, { focused: true }); } catch (e) { /* ignore */ }
+}
+
 browserAPI.webNavigation.onBeforeNavigate.addListener(async (details) => {
     // Only intercept top-level frame navigations
     if (details.frameId !== 0) return;
@@ -282,9 +292,9 @@ browserAPI.webNavigation.onBeforeNavigate.addListener(async (details) => {
 
         if (normalizeUrl(match.url) === normalizeUrl(targetUrlStr)) {
             addLog('DECISION', 'Deduplication', 'success', `Exact duplicate found for ${targetUrlStr} (Local Engine | Match: 100%). Redirecting focus.`);
-            await browserAPI.tabs.update(match.id, { active: true });
-            await browserAPI.windows.update(match.windowId, { focused: true });
-            await browserAPI.tabs.remove(details.tabId);
+            await safeUpdateTab(match.id, { active: true });
+            await safeFocusWindow(match.windowId);
+            await safeRemoveTab(details.tabId);
             return;
         }
 
@@ -302,9 +312,9 @@ browserAPI.webNavigation.onBeforeNavigate.addListener(async (details) => {
                 addLog('DECISION', 'Reflex Engine', 'success', `Decision: ${decision.action}${engineText} for target: ${targetUrlStr}`);
                 
                 if (decision.action === "REFRESH") {
-                    await browserAPI.tabs.update(match.id, { url: targetUrlStr, active: true });
-                    await browserAPI.windows.update(match.windowId, { focused: true });
-                    await browserAPI.tabs.remove(details.tabId);
+                    await safeUpdateTab(match.id, { url: targetUrlStr, active: true });
+                    await safeFocusWindow(match.windowId);
+                    await safeRemoveTab(details.tabId);
                 }
             } catch (err) {
                 addLog('DECISION', 'Reflex Engine', 'error', `Failed to deduplicate: ${err.message}`);
@@ -317,9 +327,9 @@ browserAPI.webNavigation.onBeforeNavigate.addListener(async (details) => {
         const isSingleInstance = singleInstanceDomains.some(d => targetUrl.hostname.includes(d));
         if (isSingleInstance) {
             addLog('DECISION', 'Local Fallback', 'success', `Single-instance domain matched. Updating tab ${match.id} to new path: ${targetUrlStr}`);
-            await browserAPI.tabs.update(match.id, { url: targetUrlStr, active: true });
-            await browserAPI.windows.update(match.windowId, { focused: true });
-            await browserAPI.tabs.remove(details.tabId);
+            await safeUpdateTab(match.id, { url: targetUrlStr, active: true });
+            await safeFocusWindow(match.windowId);
+            await safeRemoveTab(details.tabId);
         }
     } catch (error) {
         console.error("Error processing navigation:", error);
