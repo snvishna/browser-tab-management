@@ -35591,7 +35591,11 @@ var require_background = __commonJS({
         const data = await response.json();
         const choice = data.answers.decision.choice;
         const confidence = data.answers.decision.confidence;
-        addLog("API", "callAgentAPI", "success", `Successfully generated response from ${model}`);
+        const t = data.tokens || data.usage || {};
+        const tIn = t.input || t.prompt_tokens || 0;
+        const tOut = t.output || t.completion_tokens || 0;
+        const tokenMsg = tIn > 0 || tOut > 0 ? ` | Tokens: In ${tIn}, Out ${tOut}` : "";
+        addLog("API", "callAgentAPI", "success", `Successfully generated response from ${model}${tokenMsg}`);
         return { action: choice, confidence, engine: "TypeSafe" };
       } else if (isAnthropic) {
         if (!url2.endsWith("/v1/messages")) {
@@ -35625,7 +35629,10 @@ var require_background = __commonJS({
         }
         const data = await response.json();
         const content = data.content[0].text;
-        addLog("API", "callAgentAPI", "success", `Successfully generated response from ${model}`);
+        const tIn = data.usage?.input_tokens || 0;
+        const tOut = data.usage?.output_tokens || 0;
+        const tokenMsg = tIn > 0 || tOut > 0 ? ` | Tokens: In ${tIn}, Out ${tOut}` : "";
+        addLog("API", "callAgentAPI", "success", `Successfully generated response from ${model}${tokenMsg}`);
         try {
           const jsonStr = content.replace(/```json/gi, "").replace(/```/g, "").trim();
           const parsed = JSON.parse(jsonStr);
@@ -35672,7 +35679,10 @@ var require_background = __commonJS({
         }
         const data = await response.json();
         const content = data.choices[0].message.content;
-        addLog("API", "callAgentAPI", "success", `Successfully generated response from ${model}`);
+        const tIn = data.usage?.prompt_tokens || 0;
+        const tOut = data.usage?.completion_tokens || 0;
+        const tokenMsg = tIn > 0 || tOut > 0 ? ` | Tokens: In ${tIn}, Out ${tOut}` : "";
+        addLog("API", "callAgentAPI", "success", `Successfully generated response from ${model}${tokenMsg}`);
         try {
           const jsonStr = content.replace(/```json/gi, "").replace(/```/g, "").trim();
           const parsed = JSON.parse(jsonStr);
