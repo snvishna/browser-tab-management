@@ -44,6 +44,9 @@ async function seedConfig() {
                 if (config.cognitiveKey && config.cognitiveKey.startsWith('sk-ant-')) {
                     defaultUrl = 'https://api.anthropic.com/v1/messages';
                     defaultModel = 'claude-3-haiku-20240307';
+                } else if (config.cognitiveKey && config.cognitiveKey.startsWith('AIza')) {
+                    defaultUrl = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+                    defaultModel = 'gemini-1.5-flash';
                 }
                 
                 const newSettings = {

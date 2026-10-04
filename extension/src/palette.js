@@ -383,8 +383,8 @@ document.getElementById('settings-trigger').addEventListener('click', () => {
         if (s.reflexKey && s.reflexKey !== mainKey) useAdvanced = true;
         if (s.reflexUrl && s.reflexUrl !== s.cognitiveUrl) useAdvanced = true;
         if (s.reflexModel && s.reflexModel !== s.cognitiveModel) useAdvanced = true;
-        if (s.cognitiveUrl && !s.cognitiveUrl.includes('api.anthropic.com') && !s.cognitiveUrl.includes('api.openai.com') && s.cognitiveUrl !== '') useAdvanced = true;
-        if (s.cognitiveModel && !['claude-3-haiku-20240307', 'claude-3-5-haiku-latest', 'gpt-4o-mini'].includes(s.cognitiveModel)) useAdvanced = true;
+        if (s.cognitiveUrl && !s.cognitiveUrl.includes('api.anthropic.com') && !s.cognitiveUrl.includes('api.openai.com') && !s.cognitiveUrl.includes('generativelanguage.googleapis.com') && s.cognitiveUrl !== '') useAdvanced = true;
+        if (s.cognitiveModel && !['claude-3-haiku-20240307', 'claude-3-5-haiku-latest', 'gpt-4o-mini', 'gemini-1.5-flash'].includes(s.cognitiveModel)) useAdvanced = true;
         
         document.getElementById('advanced-toggle').checked = useAdvanced;
         document.getElementById('advanced-settings').style.display = useAdvanced ? 'block' : 'none';
@@ -404,15 +404,20 @@ document.getElementById('setting-main-key').addEventListener('input', (e) => {
     
     // Auto-populate advanced fields when typing a key, if they are empty or have the other default
     if (key.startsWith('sk-ant-')) {
-        if (!cogUrl.value || cogUrl.value.includes('api.openai.com')) cogUrl.value = 'https://api.anthropic.com/v1/messages';
-        if (!cogModel.value || cogModel.value === 'gpt-4o-mini') cogModel.value = 'claude-3-haiku-20240307';
-        if (!refUrl.value || refUrl.value.includes('api.openai.com')) refUrl.value = 'https://api.anthropic.com/v1/messages';
-        if (!refModel.value || refModel.value === 'gpt-4o-mini') refModel.value = 'claude-3-haiku-20240307';
+        if (!cogUrl.value || cogUrl.value.includes('api.openai.com') || cogUrl.value.includes('generativelanguage.googleapis.com')) cogUrl.value = 'https://api.anthropic.com/v1/messages';
+        if (!cogModel.value || cogModel.value === 'gpt-4o-mini' || cogModel.value === 'gemini-1.5-flash') cogModel.value = 'claude-3-haiku-20240307';
+        if (!refUrl.value || refUrl.value.includes('api.openai.com') || refUrl.value.includes('generativelanguage.googleapis.com')) refUrl.value = 'https://api.anthropic.com/v1/messages';
+        if (!refModel.value || refModel.value === 'gpt-4o-mini' || refModel.value === 'gemini-1.5-flash') refModel.value = 'claude-3-haiku-20240307';
+    } else if (key.startsWith('AIza')) {
+        if (!cogUrl.value || cogUrl.value.includes('api.anthropic.com') || cogUrl.value.includes('api.openai.com')) cogUrl.value = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+        if (!cogModel.value || cogModel.value === 'claude-3-haiku-20240307' || cogModel.value === 'gpt-4o-mini') cogModel.value = 'gemini-1.5-flash';
+        if (!refUrl.value || refUrl.value.includes('api.anthropic.com') || refUrl.value.includes('api.openai.com')) refUrl.value = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+        if (!refModel.value || refModel.value === 'claude-3-haiku-20240307' || refModel.value === 'gpt-4o-mini') refModel.value = 'gemini-1.5-flash';
     } else if (key.startsWith('sk-') && !key.startsWith('sk-ant-')) {
-        if (!cogUrl.value || cogUrl.value.includes('api.anthropic.com')) cogUrl.value = 'https://api.openai.com/v1/chat/completions';
-        if (!cogModel.value || cogModel.value === 'claude-3-haiku-20240307') cogModel.value = 'gpt-4o-mini';
-        if (!refUrl.value || refUrl.value.includes('api.anthropic.com')) refUrl.value = 'https://api.openai.com/v1/chat/completions';
-        if (!refModel.value || refModel.value === 'claude-3-haiku-20240307') refModel.value = 'gpt-4o-mini';
+        if (!cogUrl.value || cogUrl.value.includes('api.anthropic.com') || cogUrl.value.includes('generativelanguage.googleapis.com')) cogUrl.value = 'https://api.openai.com/v1/chat/completions';
+        if (!cogModel.value || cogModel.value === 'claude-3-haiku-20240307' || cogModel.value === 'gemini-1.5-flash') cogModel.value = 'gpt-4o-mini';
+        if (!refUrl.value || refUrl.value.includes('api.anthropic.com') || refUrl.value.includes('generativelanguage.googleapis.com')) refUrl.value = 'https://api.openai.com/v1/chat/completions';
+        if (!refModel.value || refModel.value === 'claude-3-haiku-20240307' || refModel.value === 'gemini-1.5-flash') refModel.value = 'gpt-4o-mini';
     }
 });
 
@@ -438,6 +443,9 @@ document.getElementById('btn-save-settings').addEventListener('click', () => {
         if (mainKey.startsWith('sk-ant-')) {
             defaultUrl = 'https://api.anthropic.com/v1/messages';
             defaultModel = 'claude-3-haiku-20240307';
+        } else if (mainKey.startsWith('AIza')) {
+            defaultUrl = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+            defaultModel = 'gemini-1.5-flash';
         } else if (mainKey.startsWith('sk-')) {
             defaultUrl = 'https://api.openai.com/v1/chat/completions';
             defaultModel = 'gpt-4o-mini';
