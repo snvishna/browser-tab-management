@@ -53,8 +53,48 @@ seedConfig();
 async function callAgentAPI(baseUrl, apiKey, model, systemPrompt, userPrompt) {
     let url = baseUrl;
     const isAnthropic = url.includes('anthropic.com') || model.startsWith('claude-');
+    const isTypesafe = url.includes('typesafe.ai');
 
-    if (isAnthropic) {
+    if (isTypesafe) {
+        url = 'https://api.typesafe.ai/v1/systemone';
+        
+        const payload = {
+            model: model,
+            state: userPrompt,
+            questions: {
+                decision: {
+                    type: "choice",
+                    instructions: systemPrompt,
+                    criteria: ["REFRESH", "NEW"]
+                }
+            }
+        };
+
+        addLog('API', 'callAgentAPI', 'pending', `Connecting to TypeSafe URL: ${url} | Model: ${model}`);
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errBody = await response.text();
+            const errMsg = `TypeSafe API Error: ${response.status} ${response.statusText} - ${errBody}`;
+            addLog('API', 'callAgentAPI', 'error', errMsg);
+            throw new Error(errMsg);
+        }
+
+        const data = await response.json();
+        const choice = data.answers.decision.choice;
+        addLog('API', 'callAgentAPI', 'success', `Successfully generated response from ${model}`);
+        
+        // Return in the JSON format the rest of the app expects
+        return { action: choice };
+    } else if (isAnthropic) {
         if (!url.endsWith('/v1/messages')) {
             url = url.endsWith('/') ? `${url}v1/messages` : `${url}/v1/messages`;
         }
