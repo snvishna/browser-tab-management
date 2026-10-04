@@ -103,10 +103,11 @@ async function callAgentAPI(baseUrl, apiKey, model, systemPrompt, userPrompt) {
 
         const data = await response.json();
         const choice = data.answers.decision.choice;
+        const confidence = data.answers.decision.confidence;
         addLog('API', 'callAgentAPI', 'success', `Successfully generated response from ${model}`);
         
         // Return in the JSON format the rest of the app expects
-        return { action: choice };
+        return { action: choice, confidence: confidence, engine: "TypeSafe" };
     } else if (isAnthropic) {
         if (!url.endsWith('/v1/messages')) {
             url = url.endsWith('/') ? `${url}v1/messages` : `${url}/v1/messages`;
@@ -148,9 +149,17 @@ async function callAgentAPI(baseUrl, apiKey, model, systemPrompt, userPrompt) {
         
         try {
             const jsonStr = content.replace(/```json/gi, '').replace(/```/g, '').trim();
-            return JSON.parse(jsonStr);
+            const parsed = JSON.parse(jsonStr);
+            parsed.engine = "Anthropic";
+            return parsed;
         } catch (e) {
-            return JSON.parse(content);
+            try {
+                const parsed = JSON.parse(content);
+                parsed.engine = "Anthropic";
+                return parsed;
+            } catch (e2) {
+                return { action: "NEW", engine: "Anthropic" };
+            }
         }
     } else {
         if (!url.endsWith('/chat/completions')) {
@@ -196,9 +205,17 @@ async function callAgentAPI(baseUrl, apiKey, model, systemPrompt, userPrompt) {
         
         try {
             const jsonStr = content.replace(/```json/gi, '').replace(/```/g, '').trim();
-            return JSON.parse(jsonStr);
+            const parsed = JSON.parse(jsonStr);
+            parsed.engine = "OpenAI-Compatible";
+            return parsed;
         } catch (e) {
-            return JSON.parse(content);
+            try {
+                const parsed = JSON.parse(content);
+                parsed.engine = "OpenAI-Compatible";
+                return parsed;
+            } catch (e2) {
+                return { action: "NEW", engine: "OpenAI-Compatible" };
+            }
         }
     }
 }
@@ -247,7 +264,7 @@ browserAPI.webNavigation.onBeforeNavigate.addListener(async (details) => {
         };
 
         if (normalizeUrl(match.url) === normalizeUrl(targetUrlStr)) {
-            addLog('DECISION', 'Deduplication', 'success', `Exact duplicate found for ${targetUrlStr} (Local Engine). Redirecting focus.`);
+            addLog('DECISION', 'Deduplication', 'success', `Exact duplicate found for ${targetUrlStr} (Local Engine | Match: 100%). Redirecting focus.`);
             await browserAPI.tabs.update(match.id, { active: true });
             await browserAPI.windows.update(match.windowId, { focused: true });
             await browserAPI.tabs.remove(details.tabId);
@@ -261,7 +278,11 @@ browserAPI.webNavigation.onBeforeNavigate.addListener(async (details) => {
             
             try {
                 const decision = await callAgentAPI(s.reflexUrl, s.reflexKey, s.reflexModel, systemPrompt, userPrompt);
-                addLog('DECISION', 'Reflex Engine', 'success', `Decision: ${decision.action} for target: ${targetUrlStr}`);
+                
+                const scoreText = decision.confidence ? ` | Confidence: ${(decision.confidence * 100).toFixed(1)}%` : '';
+                const engineText = decision.engine ? ` (${decision.engine}${scoreText})` : '';
+                
+                addLog('DECISION', 'Reflex Engine', 'success', `Decision: ${decision.action}${engineText} for target: ${targetUrlStr}`);
                 
                 if (decision.action === "REFRESH") {
                     await browserAPI.tabs.update(match.id, { url: targetUrlStr, active: true });
