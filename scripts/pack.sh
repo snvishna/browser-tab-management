@@ -23,7 +23,7 @@ cd ..
 # 4. Create the Source Code ZIP (Required by Firefox AMO)
 echo "🗜️ Creating Source Code ZIP (tabflow-source.zip)..."
 # We zip everything in the root, excluding git, node_modules, and the zips themselves
-zip -r tabflow-source.zip . -x "node_modules/*" "extension/node_modules/*" ".git/*" ".DS_Store" "*.zip" > /dev/null
+zip -r tabflow-source.zip . -x "node_modules/*" "*/node_modules/*" ".git/*" ".DS_Store" "*.zip" ".venv/*" "*/.venv/*" "*/__pycache__/*" > /dev/null
 
 echo "✅ Done!"
 echo "➡️  tabflow-extension.zip : Upload this to Chrome Web Store & Firefox AMO as the main package."
