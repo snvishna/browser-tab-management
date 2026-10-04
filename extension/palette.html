@@ -29,7 +29,7 @@
                     <div>
                         <strong style="color: #fff;">Use split engines (Advanced)</strong>
                         <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 4px; line-height: 1.4;">
-                            By default, your Main API Key powers both Tab Grouping and Deduplication. Enable this to route deduplication to a dedicated, ultra-fast classifier (like Jev or Groq) to save API costs and reduce latency to ~10ms.
+                            By default, your Main API Key powers both Tab Grouping and Deduplication. Enable this to route deduplication to a dedicated, ultra-fast classifier (like Groq or TogetherAI) to save API costs and reduce latency to ~10ms.
                         </div>
                     </div>
                 </label>
@@ -47,8 +47,8 @@
                     <label>Reflex Engine (Deduplication):</label>
                     <input type="password" id="setting-reflex-key" placeholder="Separate API Key (if different)" style="margin-bottom: 8px;">
                     <div style="display: flex; gap: 8px;">
-                        <input type="text" id="setting-reflex-url" placeholder="Base URL (e.g. https://api.typesafe.ai/v1)" style="flex: 2; margin-bottom: 0;">
-                        <input type="text" id="setting-reflex-model" placeholder="Model (e.g. jev-fast)" style="flex: 1; margin-bottom: 0;">
+                        <input type="text" id="setting-reflex-url" placeholder="Base URL (e.g. https://api.groq.com/openai/v1)" style="flex: 2; margin-bottom: 0;">
+                        <input type="text" id="setting-reflex-model" placeholder="Model (e.g. llama-3.1-8b-instant)" style="flex: 1; margin-bottom: 0;">
                     </div>
                 </div>
             </div>
