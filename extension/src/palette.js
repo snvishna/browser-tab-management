@@ -410,9 +410,9 @@ document.getElementById('setting-main-key').addEventListener('input', (e) => {
         if (!refModel.value || !refModel.value.startsWith('claude')) refModel.value = 'claude-3-haiku-20240307';
     } else if (key.startsWith('AIza') || key.startsWith('AQ')) {
         if (!cogUrl.value || !cogUrl.value.includes('generativelanguage.googleapis.com')) cogUrl.value = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
-        if (!cogModel.value || !cogModel.value.startsWith('gemini')) cogModel.value = 'gemini-1.5-flash';
+        if (!cogModel.value || !cogModel.value.startsWith('gemini')) cogModel.value = 'gemini-2.0-flash';
         if (!refUrl.value || !refUrl.value.includes('generativelanguage.googleapis.com')) refUrl.value = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
-        if (!refModel.value || !refModel.value.startsWith('gemini')) refModel.value = 'gemini-1.5-flash';
+        if (!refModel.value || !refModel.value.startsWith('gemini')) refModel.value = 'gemini-2.0-flash';
     } else if (key.startsWith('sk-') && !key.startsWith('sk-ant-')) {
         if (!cogUrl.value || !cogUrl.value.includes('api.openai.com')) cogUrl.value = 'https://api.openai.com/v1/chat/completions';
         if (!cogModel.value || (!cogModel.value.startsWith('gpt') && !cogModel.value.startsWith('o1'))) cogModel.value = 'gpt-4o-mini';
@@ -445,7 +445,7 @@ document.getElementById('btn-save-settings').addEventListener('click', () => {
             defaultModel = 'claude-3-haiku-20240307';
         } else if (mainKey.startsWith('AIza') || mainKey.startsWith('AQ')) {
             defaultUrl = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
-            defaultModel = 'gemini-1.5-flash';
+            defaultModel = 'gemini-2.0-flash';
         } else if (mainKey.startsWith('sk-')) {
             defaultUrl = 'https://api.openai.com/v1/chat/completions';
             defaultModel = 'gpt-4o-mini';

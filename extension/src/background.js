@@ -46,7 +46,7 @@ async function seedConfig() {
                     defaultModel = 'claude-3-haiku-20240307';
                 } else if (config.cognitiveKey && (config.cognitiveKey.startsWith('AIza') || config.cognitiveKey.startsWith('AQ'))) {
                     defaultUrl = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
-                    defaultModel = 'gemini-1.5-flash';
+                    defaultModel = 'gemini-2.0-flash';
                 }
                 
                 const newSettings = {
