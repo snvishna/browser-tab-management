@@ -395,30 +395,46 @@ document.getElementById('advanced-toggle').addEventListener('change', (e) => {
     document.getElementById('advanced-settings').style.display = e.target.checked ? 'block' : 'none';
 });
 
+function autoPopulateFields(key, urlInput, modelInput) {
+    if (!key) return;
+    if (key.startsWith('sk-ant-')) {
+        if (!urlInput.value || !urlInput.value.includes('api.anthropic.com')) urlInput.value = 'https://api.anthropic.com/v1/messages';
+        if (!modelInput.value || !modelInput.value.startsWith('claude')) modelInput.value = 'claude-3-haiku-20240307';
+    } else if (key.startsWith('AIza') || key.startsWith('AQ')) {
+        if (!urlInput.value || !urlInput.value.includes('generativelanguage.googleapis.com')) urlInput.value = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+        if (!modelInput.value || !modelInput.value.startsWith('gemini')) modelInput.value = 'gemini-2.0-flash';
+    } else if (key.startsWith('ts-') || key.startsWith('jev-')) {
+        if (!urlInput.value || !urlInput.value.includes('api.typesafe.ai')) urlInput.value = 'https://api.typesafe.ai/v1/systemone';
+        if (!modelInput.value || !modelInput.value.startsWith('jev')) modelInput.value = 'jev-latest';
+    } else if (key.startsWith('sk-') && !key.startsWith('sk-ant-')) {
+        if (!urlInput.value || !urlInput.value.includes('api.openai.com')) urlInput.value = 'https://api.openai.com/v1/chat/completions';
+        if (!modelInput.value || (!modelInput.value.startsWith('gpt') && !modelInput.value.startsWith('o1'))) modelInput.value = 'gpt-4o-mini';
+    }
+}
+
 document.getElementById('setting-main-key').addEventListener('input', (e) => {
     const key = e.target.value.trim();
     const cogUrl = document.getElementById('setting-cognitive-url');
     const cogModel = document.getElementById('setting-cognitive-model');
     const refUrl = document.getElementById('setting-reflex-url');
     const refModel = document.getElementById('setting-reflex-model');
+    const refKey = document.getElementById('setting-reflex-key');
     
-    // Auto-populate advanced fields when typing a key, if they are empty or have the other default
-    if (key.startsWith('sk-ant-')) {
-        if (!cogUrl.value || !cogUrl.value.includes('api.anthropic.com')) cogUrl.value = 'https://api.anthropic.com/v1/messages';
-        if (!cogModel.value || !cogModel.value.startsWith('claude')) cogModel.value = 'claude-3-haiku-20240307';
-        if (!refUrl.value || !refUrl.value.includes('api.anthropic.com')) refUrl.value = 'https://api.anthropic.com/v1/messages';
-        if (!refModel.value || !refModel.value.startsWith('claude')) refModel.value = 'claude-3-haiku-20240307';
-    } else if (key.startsWith('AIza') || key.startsWith('AQ')) {
-        if (!cogUrl.value || !cogUrl.value.includes('generativelanguage.googleapis.com')) cogUrl.value = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
-        if (!cogModel.value || !cogModel.value.startsWith('gemini')) cogModel.value = 'gemini-2.0-flash';
-        if (!refUrl.value || !refUrl.value.includes('generativelanguage.googleapis.com')) refUrl.value = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
-        if (!refModel.value || !refModel.value.startsWith('gemini')) refModel.value = 'gemini-2.0-flash';
-    } else if (key.startsWith('sk-') && !key.startsWith('sk-ant-')) {
-        if (!cogUrl.value || !cogUrl.value.includes('api.openai.com')) cogUrl.value = 'https://api.openai.com/v1/chat/completions';
-        if (!cogModel.value || (!cogModel.value.startsWith('gpt') && !cogModel.value.startsWith('o1'))) cogModel.value = 'gpt-4o-mini';
-        if (!refUrl.value || !refUrl.value.includes('api.openai.com')) refUrl.value = 'https://api.openai.com/v1/chat/completions';
-        if (!refModel.value || (!refModel.value.startsWith('gpt') && !refModel.value.startsWith('o1'))) refModel.value = 'gpt-4o-mini';
+    // Auto-populate Cognitive Engine
+    autoPopulateFields(key, cogUrl, cogModel);
+    
+    // Only auto-populate Reflex Engine if the user hasn't explicitly set a separate Reflex Key
+    if (!refKey.value.trim()) {
+        autoPopulateFields(key, refUrl, refModel);
     }
+});
+
+document.getElementById('setting-reflex-key').addEventListener('input', (e) => {
+    const key = e.target.value.trim();
+    const refUrl = document.getElementById('setting-reflex-url');
+    const refModel = document.getElementById('setting-reflex-model');
+    
+    autoPopulateFields(key, refUrl, refModel);
 });
 
 document.getElementById('btn-cancel-settings').addEventListener('click', () => {
