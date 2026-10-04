@@ -339,6 +339,18 @@ browserAPI.webNavigation.onBeforeNavigate.addListener(async (details) => {
 // --- Command Palette Listeners ---
 function openPalette() {
     browserAPI.tabs.query({ active: true, currentWindow: true }).then(async tabs => {
+        if (!tabs || tabs.length === 0) {
+            console.error("No active tab found to inject palette.");
+            // Fallback for unexpected empty tabs list
+            browserAPI.windows.create({
+                url: browserAPI.runtime.getURL('palette.html'),
+                type: 'popup',
+                width: 600,
+                height: 450
+            });
+            return;
+        }
+        
         if (tabs[0]) {
             const url = tabs[0].url || "";
             // Check if URL is restricted (new tab pages, extension pages, settings)
@@ -346,8 +358,8 @@ function openPalette() {
                 const width = 600;
                 const height = 450;
                 browserAPI.windows.getCurrent().then(win => {
-                    const left = Math.round((win.width - width) / 2 + win.left);
-                    const top = Math.round((win.height - height) / 2 + win.top);
+                    const left = win && win.width ? Math.round((win.width - width) / 2 + win.left) : 200;
+                    const top = win && win.height ? Math.round((win.height - height) / 2 + win.top) : 200;
                     browserAPI.windows.create({
                         url: browserAPI.runtime.getURL('palette.html'),
                         type: 'popup',
@@ -355,6 +367,13 @@ function openPalette() {
                         height: height,
                         left: left,
                         top: top
+                    });
+                }).catch(e => {
+                    browserAPI.windows.create({
+                        url: browserAPI.runtime.getURL('palette.html'),
+                        type: 'popup',
+                        width: width,
+                        height: height
                     });
                 });
                 return;
@@ -376,6 +395,8 @@ function openPalette() {
                 });
             }
         }
+    }).catch(err => {
+        console.error("Query active tab failed:", err);
     });
 }
 
