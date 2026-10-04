@@ -19,6 +19,10 @@ async function runBuild() {
     // With: (function(){return null;})
     code = code.replace(/eval\("quire"\.replace\(\/\^\/, "re"\)\)/g, '(function(){return null;})');
     
+    // Replace: new Function("return this")() from Webpack/Polyfills
+    // With: globalThis
+    code = code.replace(/new Function\("return this"\)\(\)/g, 'globalThis');
+    
     fs.writeFileSync(filePath, code);
     console.log('Build completed and patched for MV3!');
 }
