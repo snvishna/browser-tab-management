@@ -23,6 +23,7 @@ zip -r ../tabflow-chrome.zip . -x "node_modules/*" "*/node_modules/*" ".*" "*.zi
 
 # 4. Create Firefox ZIP
 echo "🗜️ Creating Firefox ZIP (tabflow-firefox.zip)..."
+cp manifest.bak.json manifest.json
 node -e "const fs = require('fs'); const m = JSON.parse(fs.readFileSync('manifest.json')); delete m.background.service_worker; m.background.scripts = ['dist/background.js']; fs.writeFileSync('manifest.json', JSON.stringify(m, null, 2));"
 zip -r ../tabflow-firefox.zip . -x "node_modules/*" "*/node_modules/*" ".*" "*.zip" > /dev/null
 
