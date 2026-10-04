@@ -17,3 +17,9 @@ When writing auto-population, configuration parsing, or UI interaction logic, fo
 
 4. **Fail loudly in tests, recover gracefully in UI:**
    Ensure edge cases (like new API key prefixes such as `AQ`) default to the safest, most capable denominator instead of silently failing.
+
+5. **Decouple Event Listeners to Prevent UI Cross-Talk:**
+   Never write monolithic event listeners that blindly overwrite the entire UI state. Extract shared logic into isolated, reusable functions (e.g., `autoPopulateFields(key, targetUrl, targetModel)`).
+
+6. **Respect Specific over Global State:**
+   When a UI contains a "Global" input (e.g., Main API Key) and a "Specific" input (e.g., Reflex API Key), updating the global input must **never** aggressively overwrite the specific input if the user has already provided custom data for it. Always check `if (!specificInput.value)` before cascading global state downwards.
