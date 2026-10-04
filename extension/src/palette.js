@@ -381,7 +381,8 @@ document.getElementById('settings-trigger').addEventListener('click', () => {
         // Auto-detect if advanced settings are in use
         let useAdvanced = false;
         if (s.reflexKey && s.reflexKey !== mainKey) useAdvanced = true;
-        if (s.reflexUrl || s.reflexModel) useAdvanced = true;
+        if (s.reflexUrl && s.reflexUrl !== s.cognitiveUrl) useAdvanced = true;
+        if (s.reflexModel && s.reflexModel !== s.cognitiveModel) useAdvanced = true;
         if (s.cognitiveUrl && !s.cognitiveUrl.includes('api.anthropic.com') && !s.cognitiveUrl.includes('api.openai.com') && s.cognitiveUrl !== '') useAdvanced = true;
         if (s.cognitiveModel && !['claude-3-haiku-20240307', 'claude-3-5-haiku-latest', 'gpt-4o-mini'].includes(s.cognitiveModel)) useAdvanced = true;
         
@@ -392,6 +393,27 @@ document.getElementById('settings-trigger').addEventListener('click', () => {
 
 document.getElementById('advanced-toggle').addEventListener('change', (e) => {
     document.getElementById('advanced-settings').style.display = e.target.checked ? 'block' : 'none';
+});
+
+document.getElementById('setting-main-key').addEventListener('input', (e) => {
+    const key = e.target.value.trim();
+    const cogUrl = document.getElementById('setting-cognitive-url');
+    const cogModel = document.getElementById('setting-cognitive-model');
+    const refUrl = document.getElementById('setting-reflex-url');
+    const refModel = document.getElementById('setting-reflex-model');
+    
+    // Auto-populate advanced fields when typing a key, if they are empty or have the other default
+    if (key.startsWith('sk-ant-')) {
+        if (!cogUrl.value || cogUrl.value.includes('api.openai.com')) cogUrl.value = 'https://api.anthropic.com/v1/messages';
+        if (!cogModel.value || cogModel.value === 'gpt-4o-mini') cogModel.value = 'claude-3-haiku-20240307';
+        if (!refUrl.value || refUrl.value.includes('api.openai.com')) refUrl.value = 'https://api.anthropic.com/v1/messages';
+        if (!refModel.value || refModel.value === 'gpt-4o-mini') refModel.value = 'claude-3-haiku-20240307';
+    } else if (key.startsWith('sk-') && !key.startsWith('sk-ant-')) {
+        if (!cogUrl.value || cogUrl.value.includes('api.anthropic.com')) cogUrl.value = 'https://api.openai.com/v1/chat/completions';
+        if (!cogModel.value || cogModel.value === 'claude-3-haiku-20240307') cogModel.value = 'gpt-4o-mini';
+        if (!refUrl.value || refUrl.value.includes('api.anthropic.com')) refUrl.value = 'https://api.openai.com/v1/chat/completions';
+        if (!refModel.value || refModel.value === 'claude-3-haiku-20240307') refModel.value = 'gpt-4o-mini';
+    }
 });
 
 document.getElementById('btn-cancel-settings').addEventListener('click', () => {
