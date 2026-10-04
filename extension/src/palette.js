@@ -1,0 +1,452 @@
+const browserAPI = typeof browser !== "undefined" ? browser : chrome;
+
+const input = document.getElementById('search-input');
+const list = document.getElementById('results-list');
+const badge = document.getElementById('command-badge');
+
+let allItems = [];
+let visibleItems = [];
+let selectedIndex = 0;
+let isCommandMode = false;
+
+const commands = [
+    { type: 'command', title: "Organize All Tabs (AI Magic)", action: "cmd_group_tabs_force", icon: "✨", section: "Commands" },
+    { type: 'command', title: "Organize Ungrouped Tabs", action: "cmd_group_tabs_leaf", icon: "🌱", section: "Commands" },
+    { type: 'command', title: "Ungroup All Tabs", action: "cmd_ungroup_all", icon: "💥", section: "Commands" },
+    { type: 'command', title: "Consolidate All Windows", action: "cmd_consolidate", icon: "🗂️", section: "Commands" },
+    { type: 'command', title: "Archive Unused Tabs (> 3 Days)", action: "cmd_archive", icon: "📦", section: "Commands" },
+    { type: 'command', title: "Recover Last Archived", action: "cmd_recover", icon: "♻️", section: "Commands" },
+    { type: 'command', title: "Export Backup (Tabs & Archives)", action: "cmd_export_backup", icon: "💾", section: "Backup & Restore" },
+    { type: 'command', title: "Import Backup", action: "cmd_import_backup", icon: "📥", section: "Backup & Restore" }
+];
+
+// Initialize
+input.focus();
+
+// Fetch tabs
+async function loadTabs() {
+    const response = await browserAPI.runtime.sendMessage({ action: 'get_all_tabs' });
+    
+    const active = response.activeTabs.map(tab => ({
+        type: 'tab',
+        title: tab.title,
+        url: tab.url,
+        icon: tab.favIconUrl,
+        tabId: tab.id,
+        windowId: tab.windowId,
+        lastAccessed: tab.lastAccessed,
+        section: "Active Tabs"
+    }));
+
+    const pastClosed = (response.closedTabs || []).sort((a,b) => b.timestamp - a.timestamp).map(tab => ({
+        type: 'closed_tab',
+        title: tab.title,
+        url: tab.url,
+        icon: tab.favIconUrl || "🗑️",
+        sessionId: tab.sessionId,
+        timestamp: tab.timestamp,
+        section: "Past Tabs"
+    }));
+
+    const pastArchived = (response.archivedTabs || []).sort((a,b) => b.timestamp - a.timestamp).map(tab => ({
+        type: 'archived_tab',
+        title: tab.title,
+        url: tab.url,
+        icon: tab.favIconUrl || "📦",
+        dbId: tab.id,
+        timestamp: tab.timestamp,
+        section: "Past Tabs"
+    }));
+
+    // Merge closed and archived into a single "Past Tabs" list, sorted perfectly
+    let allPast = [...pastClosed, ...pastArchived].sort((a,b) => b.timestamp - a.timestamp);
+
+    // Deduplicate Past Tabs by URL (keep the most recent one)
+    const seenUrls = new Set();
+    allPast = allPast.filter(tab => {
+        if (!tab.url || seenUrls.has(tab.url)) return false;
+        seenUrls.add(tab.url);
+        return true;
+    });
+
+    allItems = [...active, ...allPast];
+    renderList(allItems);
+}
+
+function getFriendlyDate(timestamp) {
+    if (!timestamp) return '';
+    const d = new Date(timestamp);
+    const now = new Date();
+    const options = { month: 'short', day: 'numeric' };
+    if (d.getFullYear() !== now.getFullYear()) {
+        options.year = 'numeric';
+    }
+    return d.toLocaleDateString(undefined, options);
+}
+
+function renderList(items) {
+    list.innerHTML = '';
+    visibleItems = items;
+    selectedIndex = 0;
+    if (list) list.scrollTop = 0;
+
+    let currentSection = null;
+
+    items.forEach((item, index) => {
+        if (item.section && item.section !== currentSection) {
+            const header = document.createElement('li');
+            header.className = 'section-header';
+            header.textContent = item.section;
+            list.appendChild(header);
+            currentSection = item.section;
+        }
+
+        const li = document.createElement('li');
+        li.className = 'result-item';
+        
+        // Icon
+        if (item.type === 'command') {
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'result-icon';
+            iconSpan.style.fontSize = '20px';
+            iconSpan.textContent = item.icon;
+            iconSpan.style.display = 'flex';
+            iconSpan.style.alignItems = 'center';
+            iconSpan.style.justifyContent = 'center';
+            li.appendChild(iconSpan);
+        } else {
+            const img = document.createElement('img');
+            img.className = 'result-icon';
+            img.src = item.icon || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+            img.onerror = () => { img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; };
+            li.appendChild(img);
+        }
+        
+        // Text Container
+        const textDiv = document.createElement('div');
+        textDiv.className = 'result-text';
+        
+        const title = document.createElement('div');
+        title.className = 'result-title';
+        title.textContent = item.title;
+        textDiv.appendChild(title);
+        
+        if (item.url) {
+            const url = document.createElement('div');
+            url.className = 'result-url';
+            url.textContent = item.url.replace(/^https?:\/\//, '');
+            textDiv.appendChild(url);
+        }
+        
+        li.appendChild(textDiv);
+        
+        // Timestamps
+        if (item.type === 'archived_tab' && item.timestamp) {
+            const timeSpan = document.createElement('div');
+            timeSpan.className = 'result-time';
+            timeSpan.textContent = getFriendlyDate(item.timestamp);
+            li.appendChild(timeSpan);
+        } else if (item.type === 'closed_tab' && item.timestamp) {
+            const timeSpan = document.createElement('div');
+            timeSpan.className = 'result-time';
+            const hours = Math.round((Date.now() - item.timestamp) / (1000 * 60 * 60));
+            timeSpan.textContent = hours > 24 ? `${Math.round(hours/24)}d ago` : (hours > 0 ? `${hours}h ago` : "Just now");
+            li.appendChild(timeSpan);
+        } else if (item.type === 'tab' && item.lastAccessed) {
+            const timeSpan = document.createElement('div');
+            timeSpan.className = 'result-time';
+            const hours = Math.round((Date.now() - item.lastAccessed) / (1000 * 60 * 60));
+            timeSpan.textContent = hours > 24 ? `${Math.round(hours/24)}d ago` : (hours > 0 ? `${hours}h ago` : "Just now");
+            li.appendChild(timeSpan);
+        }
+        
+        // Hover and Click
+        li.onmouseenter = () => updateSelection(index);
+        li.onclick = () => executeItem(item);
+        
+        list.appendChild(li);
+    });
+    
+    updateSelection(0);
+}
+
+function updateSelection(newIndex) {
+    if (newIndex < 0 || newIndex >= visibleItems.length) return;
+    
+    const items = list.querySelectorAll('.result-item');
+    if (items[selectedIndex]) items[selectedIndex].classList.remove('selected');
+    
+    selectedIndex = newIndex;
+    items[selectedIndex].classList.add('selected');
+    items[selectedIndex].scrollIntoView({ block: 'nearest' });
+}
+
+function executeItem(item) {
+    let promise = null;
+    let shouldClose = true;
+
+    if (item.type === 'tab') {
+        promise = browserAPI.runtime.sendMessage({ action: 'switch_to_tab', tabId: item.tabId, windowId: item.windowId });
+    } else if (item.type === 'archived_tab') {
+        promise = browserAPI.runtime.sendMessage({ action: 'restore_archived_tab', dbId: item.dbId, url: item.url });
+    } else if (item.type === 'closed_tab') {
+        promise = browserAPI.runtime.sendMessage({ action: 'restore_closed_tab', sessionId: item.sessionId });
+    } else if (item.type === 'command') {
+        if (item.action === 'cmd_group_tabs_force') {
+            promise = browserAPI.runtime.sendMessage({ action: 'cluster_tabs_force' });
+        } else if (item.action === 'cmd_group_tabs_leaf') {
+            promise = browserAPI.runtime.sendMessage({ action: 'cluster_tabs_leaf' });
+        } else if (item.action === 'cmd_ungroup_all') {
+            promise = browserAPI.runtime.sendMessage({ action: 'ungroup_all' });
+        } else if (item.action === 'cmd_consolidate') {
+            promise = browserAPI.runtime.sendMessage({ action: 'consolidate_windows' });
+        } else if (item.action === 'cmd_archive') {
+            promise = browserAPI.runtime.sendMessage({ action: 'archive_stale_tabs' });
+        } else if (item.action === 'cmd_recover') {
+            promise = browserAPI.runtime.sendMessage({ action: 'recover_last_archived' });
+        } else if (item.action === 'cmd_export_backup') {
+            promise = browserAPI.runtime.sendMessage({ action: 'export_backup' }).then(response => {
+                const blob = new Blob([JSON.stringify(response.backup, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `tab-manager-backup-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        } else if (item.action === 'cmd_import_backup') {
+            shouldClose = false;
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'application/json';
+            fileInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const backup = JSON.parse(event.target.result);
+                        browserAPI.runtime.sendMessage({ action: 'import_backup', backup }).then(() => {
+                            if (window.parent !== window) {
+                                window.parent.postMessage('close-palette', '*');
+                            } else {
+                                window.close();
+                            }
+                        });
+                    } catch(err) { alert("Invalid backup file!"); }
+                };
+                reader.readAsText(file);
+            };
+            fileInput.click();
+        } else {
+            console.log("Command not implemented yet:", item.action);
+        }
+    }
+
+    function closeUI() {
+        if (window.parent !== window) {
+            window.parent.postMessage('close-palette', '*');
+        } else {
+            window.close();
+        }
+    }
+
+    if (shouldClose) {
+        if (promise && typeof promise.then === 'function') {
+            promise.then(() => {
+                closeUI();
+            }).catch(e => {
+                console.error(e);
+                closeUI();
+            });
+        } else {
+            closeUI();
+        }
+    }
+}
+
+// Input handling (Filtering and Commands)
+input.addEventListener('input', (e) => {
+    let query = e.target.value;
+    
+    // Check command mode
+    if (query === '>' && !isCommandMode) {
+        isCommandMode = true;
+        input.value = '';
+        query = '';
+    } else if (query.startsWith('>')) {
+        isCommandMode = true;
+        input.value = query.substring(1);
+        query = input.value;
+    }
+
+    if (isCommandMode) {
+        badge.style.display = 'block';
+        document.getElementById('settings-trigger').style.display = 'block';
+        input.style.paddingLeft = '8px';
+        query = query.toLowerCase().trim();
+        
+        const terms = query.split(/\s+/).filter(t => t.length > 0);
+        const filteredCommands = commands.filter(c => {
+            const target = `${c.title} ${c.action}`.toLowerCase();
+            return terms.every(term => target.includes(term));
+        }).map(c => ({ ...c, type: 'command' }));
+        
+        renderList(filteredCommands);
+    } else {
+        isCommandMode = false;
+        badge.style.display = 'none';
+        document.getElementById('settings-trigger').style.display = 'none';
+        input.style.paddingLeft = '0px';
+        query = query.toLowerCase().trim();
+        
+        if (query === '') {
+            renderList(allItems);
+        } else {
+            const terms = query.split(/\s+/).filter(t => t.length > 0);
+            const filteredTabs = allItems.filter(t => {
+                const target = `${t.title || ''} ${t.url || ''}`.toLowerCase();
+                return terms.every(term => target.includes(term));
+            });
+            renderList(filteredTabs);
+        }
+    }
+});
+
+// Keyboard Navigation
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (window.parent !== window) {
+            window.parent.postMessage('close-palette', '*');
+        } else {
+            window.close();
+        }
+        return;
+    }
+
+    // Exit command mode on backspace when input is empty
+    if (e.key === 'Backspace' && isCommandMode && input.value === '') {
+        isCommandMode = false;
+        badge.style.display = 'none';
+        document.getElementById('settings-trigger').style.display = 'none';
+        input.style.paddingLeft = '0px';
+        renderList(allItems);
+        return;
+    }
+    
+    if (visibleItems.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        updateSelection((selectedIndex + 1) % visibleItems.length);
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        updateSelection((selectedIndex - 1 + visibleItems.length) % visibleItems.length);
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        executeItem(visibleItems[selectedIndex]);
+    }
+});
+
+window.addEventListener('message', (event) => {
+    if (event.data === 'reset-palette') {
+        input.value = '';
+        input.placeholder = 'Search Tabs...';
+        isCommandMode = false;
+        badge.style.display = 'none';
+        document.getElementById('settings-trigger').style.display = 'none';
+        input.style.paddingLeft = '';
+        if (list) list.scrollTop = 0;
+        loadTabs();
+    }
+});
+
+// Settings Events
+document.getElementById('settings-trigger').addEventListener('click', () => {
+    document.getElementById('search-header').style.display = 'none';
+    document.getElementById('results-list').style.display = 'none';
+    document.getElementById('settings-view').style.display = 'block';
+    
+    // Load existing
+    browserAPI.runtime.sendMessage({ action: 'get_settings' }).then(s => {
+        const mainKey = s.cognitiveKey || '';
+        document.getElementById('setting-main-key').value = mainKey;
+        
+        document.getElementById('setting-reflex-url').value = s.reflexUrl || '';
+        document.getElementById('setting-reflex-key').value = (s.reflexKey && s.reflexKey !== mainKey) ? s.reflexKey : '';
+        document.getElementById('setting-reflex-model').value = s.reflexModel || '';
+        document.getElementById('setting-cognitive-url').value = s.cognitiveUrl || '';
+        document.getElementById('setting-cognitive-model').value = s.cognitiveModel || '';
+
+        // Auto-detect if advanced settings are in use
+        let useAdvanced = false;
+        if (s.reflexKey && s.reflexKey !== mainKey) useAdvanced = true;
+        if (s.reflexUrl || s.reflexModel) useAdvanced = true;
+        if (s.cognitiveUrl && !s.cognitiveUrl.includes('api.anthropic.com') && !s.cognitiveUrl.includes('api.openai.com') && s.cognitiveUrl !== '') useAdvanced = true;
+        if (s.cognitiveModel && !['claude-3-haiku-20240307', 'claude-3-5-haiku-latest', 'gpt-4o-mini'].includes(s.cognitiveModel)) useAdvanced = true;
+        
+        document.getElementById('advanced-toggle').checked = useAdvanced;
+        document.getElementById('advanced-settings').style.display = useAdvanced ? 'block' : 'none';
+    });
+});
+
+document.getElementById('advanced-toggle').addEventListener('change', (e) => {
+    document.getElementById('advanced-settings').style.display = e.target.checked ? 'block' : 'none';
+});
+
+document.getElementById('btn-cancel-settings').addEventListener('click', () => {
+    document.getElementById('settings-view').style.display = 'none';
+    document.getElementById('search-header').style.display = 'flex';
+    document.getElementById('results-list').style.display = 'block';
+    input.focus();
+});
+
+document.getElementById('btn-save-settings').addEventListener('click', () => {
+    const btn = document.getElementById('btn-save-settings');
+    const originalText = btn.textContent;
+    btn.textContent = "Saving...";
+    
+    const useAdvanced = document.getElementById('advanced-toggle').checked;
+    const mainKey = document.getElementById('setting-main-key').value.trim();
+    
+    let s = {};
+    if (!useAdvanced) {
+        let defaultUrl = '';
+        let defaultModel = '';
+        if (mainKey.startsWith('sk-ant-')) {
+            defaultUrl = 'https://api.anthropic.com/v1/messages';
+            defaultModel = 'claude-3-haiku-20240307';
+        } else if (mainKey.startsWith('sk-')) {
+            defaultUrl = 'https://api.openai.com/v1/chat/completions';
+            defaultModel = 'gpt-4o-mini';
+        }
+
+        s = {
+            cognitiveKey: mainKey,
+            cognitiveUrl: defaultUrl,
+            cognitiveModel: defaultModel,
+            reflexKey: mainKey,
+            reflexUrl: defaultUrl,
+            reflexModel: defaultModel
+        };
+    } else {
+        s = {
+            cognitiveKey: mainKey,
+            cognitiveUrl: document.getElementById('setting-cognitive-url').value.trim(),
+            cognitiveModel: document.getElementById('setting-cognitive-model').value.trim(),
+            reflexKey: document.getElementById('setting-reflex-key').value.trim() || mainKey,
+            reflexUrl: document.getElementById('setting-reflex-url').value.trim(),
+            reflexModel: document.getElementById('setting-reflex-model').value.trim()
+        };
+    }
+    
+    browserAPI.runtime.sendMessage({ action: 'save_settings', settings: s }).then(() => {
+        btn.textContent = "Saved ✓";
+        setTimeout(() => {
+            btn.textContent = originalText;
+            document.getElementById('btn-cancel-settings').click();
+        }, 600);
+    });
+});
+
+loadTabs();

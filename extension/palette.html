@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="src/palette.css">
+</head>
+<body>
+    <div id="palette-container">
+        <div id="search-header">
+            <img src="icons/icon-48.png" id="search-icon" alt="TabFlow Agent">
+            <span id="command-badge" style="display: none;">&gt;</span>
+            <input type="text" id="search-input" placeholder="Search tabs, or type > for commands..." autofocus autocomplete="off">
+            <div id="settings-trigger" style="display: none; cursor: pointer; font-size: 13px; font-weight: 600; margin-left: 10px; opacity: 0.9; transition: 0.2s; background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 16px; white-space: nowrap; color: #fff; border: 1px solid rgba(255,255,255,0.05);" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'" title="Configure AI Models & Keys">🔑 API Keys</div>
+        </div>
+        <ul id="results-list"></ul>
+        
+        <div id="settings-view" style="display: none;">
+            <h3>⚙️ AI Agent Settings</h3>
+            
+            <div class="setting-group">
+                <label>Main API Key (Grouping & Deduplication):</label>
+                <input type="password" id="setting-main-key" placeholder="Paste Claude or OpenAI Key (sk-...)">
+                <div class="settings-hint-inline" id="main-key-hint">Auto-detects Claude or OpenAI. Leave blank for free local AI.</div>
+            </div>
+
+            <div class="setting-group" style="background: transparent; padding: 0; margin-bottom: 15px;">
+                <label style="display: flex; align-items: flex-start; font-weight: normal; font-size: 13px; color: rgba(255,255,255,0.9); cursor: pointer;">
+                    <input type="checkbox" id="advanced-toggle" style="width: auto; margin-right: 8px; margin-top: 2px;">
+                    <div>
+                        <strong style="color: #fff;">Use split engines (Advanced)</strong>
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 4px; line-height: 1.4;">
+                            By default, your Main API Key powers both Tab Grouping and Deduplication. Enable this to route deduplication to a dedicated, ultra-fast classifier (like Jev or Groq) to save API costs and reduce latency to ~10ms.
+                        </div>
+                    </div>
+                </label>
+            </div>
+
+            <div id="advanced-settings" style="display: none; margin-bottom: 24px; padding-left: 12px; border-left: 2px solid rgba(255,255,255,0.1);">
+                <div class="setting-group" style="margin-bottom: 12px; padding: 12px;">
+                    <label>Cognitive Engine (Grouping):</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="setting-cognitive-url" placeholder="Base URL (e.g. https://api.openai.com/v1)" style="flex: 2;">
+                        <input type="text" id="setting-cognitive-model" placeholder="Model (e.g. gpt-4o-mini)" style="flex: 1;">
+                    </div>
+                </div>
+                <div class="setting-group" style="margin-bottom: 0; padding: 12px;">
+                    <label>Reflex Engine (Deduplication):</label>
+                    <input type="password" id="setting-reflex-key" placeholder="Separate API Key (if different)" style="margin-bottom: 8px;">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="setting-reflex-url" placeholder="Base URL (e.g. https://api.typesafe.ai/v1)" style="flex: 2; margin-bottom: 0;">
+                        <input type="text" id="setting-reflex-model" placeholder="Model (e.g. jev-fast)" style="flex: 1; margin-bottom: 0;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-actions">
+                <button id="btn-save-settings">Save Settings</button>
+                <button id="btn-cancel-settings">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <script src="src/palette.js"></script>
+</body>
+</html>
