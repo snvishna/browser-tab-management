@@ -408,7 +408,7 @@ document.getElementById('setting-main-key').addEventListener('input', (e) => {
         if (!cogModel.value || cogModel.value === 'gpt-4o-mini' || cogModel.value === 'gemini-1.5-flash') cogModel.value = 'claude-3-haiku-20240307';
         if (!refUrl.value || refUrl.value.includes('api.openai.com') || refUrl.value.includes('generativelanguage.googleapis.com')) refUrl.value = 'https://api.anthropic.com/v1/messages';
         if (!refModel.value || refModel.value === 'gpt-4o-mini' || refModel.value === 'gemini-1.5-flash') refModel.value = 'claude-3-haiku-20240307';
-    } else if (key.startsWith('AIza')) {
+    } else if (key.startsWith('AIza') || key.startsWith('AQ')) {
         if (!cogUrl.value || cogUrl.value.includes('api.anthropic.com') || cogUrl.value.includes('api.openai.com')) cogUrl.value = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
         if (!cogModel.value || cogModel.value === 'claude-3-haiku-20240307' || cogModel.value === 'gpt-4o-mini') cogModel.value = 'gemini-1.5-flash';
         if (!refUrl.value || refUrl.value.includes('api.anthropic.com') || refUrl.value.includes('api.openai.com')) refUrl.value = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
@@ -443,7 +443,7 @@ document.getElementById('btn-save-settings').addEventListener('click', () => {
         if (mainKey.startsWith('sk-ant-')) {
             defaultUrl = 'https://api.anthropic.com/v1/messages';
             defaultModel = 'claude-3-haiku-20240307';
-        } else if (mainKey.startsWith('AIza')) {
+        } else if (mainKey.startsWith('AIza') || mainKey.startsWith('AQ')) {
             defaultUrl = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
             defaultModel = 'gemini-1.5-flash';
         } else if (mainKey.startsWith('sk-')) {
