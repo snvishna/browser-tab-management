@@ -35555,6 +35555,7 @@ var require_background = __commonJS({
     seedConfig();
     async function callAgentAPI(baseUrl, apiKey, model, systemPrompt, userPrompt) {
       let url2 = baseUrl;
+      if (model === "jev-fast") model = "jev-latest";
       const isAnthropic = url2.includes("anthropic.com") || model.startsWith("claude-");
       const isTypesafe = url2.includes("typesafe.ai");
       if (isTypesafe) {
