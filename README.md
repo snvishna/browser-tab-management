@@ -7,23 +7,23 @@
 **TabFlow Agent** is a state-of-the-art, dual-engine AI browser tab manager. It doesn't just search tabs; it actively manages your entire browsing lifecycle. By combining blazing-fast reflex routing with deep generative AI, it intelligently deduplicates, routes, groups, and tracks your digital footprint.
 
 ### 🛡️ The Dual-Engine AI Architecture
-Our extension is fully customizable to your privacy and performance needs:
+Our extension is fully customizable to your privacy, cost, and performance needs:
 
 **1. The Free Tier (Zero-Configuration, 100% Local)**
-Out of the box, the extension runs `all-MiniLM-L6-v2` locally in your browser via WebAssembly. Your tabs never leave your machine.
-- **Reflex Routing**: Instant cosine similarity deduplication.
-- **Cognitive Grouping**: Mathematical K-Means clustering (using domain centroids for naming).
+Out of the box, the extension runs highly optimized heuristic algorithms locally in your browser. Your tabs never leave your machine unless you provide an API key.
+- **Reflex Deduplication**: Instant exact-match URL routing and Single-Instance Domain fallback (e.g. `localhost`, `internal.corp`).
+- **Mathematical Grouping**: Local TF-IDF text embedding clustering algorithms fallback for semantic grouping.
 
 **2. The Pro Tier (Bring Your Own API Key)**
-Plug in your API keys (OpenAI, Gemini, Jev) to unlock true Agentic capabilities:
-- **The Reflex Engine**: Use an ultra-fast classifier (like Jev or Groq) to intercept clicks in real-time (~10ms). It semantically understands the difference between comparing two Amazon products (opens new tabs) vs. clicking a dashboard link twice (refreshes existing tab).
-- **The Cognitive Engine**: Use a heavy generative model (like Gemini or GPT-4o) to group chaotic tabs into premium, logically named workspaces (e.g., "Frontend Development", "Financial Planning").
-*(Note: A single API key can be used for both engines, or you can split them in Advanced Settings!)*
+Plug in your API keys (Anthropic Claude, OpenAI, Groq, TypeSafe Jev) to unlock true Agentic capabilities:
+- **The Reflex Engine**: Intercept clicks in real-time. It semantically understands the difference between comparing two Amazon products (opens new tabs) vs. clicking a dashboard link twice (refreshes existing tab). Use a low-latency endpoint like TypeSafe `jev-latest` or Groq `llama-3` for ~10ms execution!
+- **The Cognitive Engine**: Use a heavy generative model (like Claude 3.5 Sonnet or GPT-4o) to group chaotic tabs into premium, logically named workspaces (e.g., "Frontend Development", "Financial Planning").
+*(Note: You can split these engines in the UI! Use Groq for cheap real-time deduplication, and Anthropic for deep semantic grouping!)*
 
-### 🕰️ The 90-Day Infinite Memory
-TabFlow Agent acts as a rolling black box for your browser. It silently tracks and logs every tab you open and close into a highly compressed, locally encrypted IndexedDB. 
-- You can fuzzy search your *entire* 90-day history instantly.
-- Strict 90-day auto-pruning guarantees your browser never bloats.
+### 🕰️ The 90-Day Infinite Memory & Admin Console
+TabFlow Agent acts as a rolling black box for your browser. 
+- **Admin Console**: Click `⚙️ Settings -> Admin Console` to access a highly detailed System Log with real-time fuzzy search. It tracks exact token consumption, model confidence scores, and all routing decisions. 
+- **90-Day Storage**: Silently tracks and logs every tab you open and close into a highly compressed, locally encrypted IndexedDB, auto-pruned to prevent bloat.
 - **God-Mode Export**: Dump your entire active and historical lifecycle into a single JSON file.
 
 ---
@@ -82,8 +82,8 @@ Inside the palette, type `>` to access AI commands:
 
 ## 🛠️ Architecture & Development
 Built with a highly scalable, privacy-centric architecture:
-- **Frontend**: Vanilla JS, HTML/CSS (Glassmorphism design), Manifest V3.
-- **In-Browser AI**: `@xenova/transformers` bundled via a custom `esbuild` pipeline (specifically patched for MV3 CSP compliance).
+- **Frontend**: Vanilla JS, HTML/CSS (Glassmorphism design), fully MV3 compliant without unsafe WebAssembly or remote code execution.
+- **Background Agent**: Event-driven background service worker that asynchronously pipes DOM actions through your chosen LLM endpoints.
 - **Storage**: Native IndexedDB via `Dexie.js` for limitless, zero-setup local archiving.
 - **Testing**: `vitest` for blazing-fast unit testing of clustering logic.
 
