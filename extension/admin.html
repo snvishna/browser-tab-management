@@ -48,7 +48,14 @@
     </style>
 </head>
 <body>
-    <h1>System Logs <button id="btn-refresh">Refresh</button> <button id="btn-clear" style="background: #ff453a; margin-left: 10px;">Clear Logs</button></h1>
+    <h1>
+        System Logs 
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="text" id="search-input" placeholder="Fuzzy search logs..." style="padding: 6px 12px; border-radius: 6px; border: none; background: rgba(255,255,255,0.1); color: white; width: 200px;">
+            <button id="btn-refresh">Refresh</button> 
+            <button id="btn-clear" style="background: #ff453a;">Clear Logs</button>
+        </div>
+    </h1>
     <div id="logs-container">Loading logs...</div>
     <script src="src/admin.js"></script>
 </body>

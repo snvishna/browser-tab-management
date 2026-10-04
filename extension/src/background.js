@@ -9,9 +9,19 @@ async function addLog(type, action, status, details) {
     console.log(`[${type}] ${action} (${status}): ${details}`);
     const log = { timestamp: Date.now(), type, action, status, details };
     browserAPI.storage.local.get(['agent_logs'], (res) => {
+        const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+        const now = Date.now();
         let logs = res.agent_logs || [];
+        
+        // Add new log to the beginning
         logs.unshift(log);
-        if (logs.length > 100) logs = logs.slice(0, 100);
+        
+        // TTL filter (older than 7 days)
+        logs = logs.filter(l => (now - l.timestamp) < SEVEN_DAYS);
+        
+        // Max limit to prevent bloat
+        if (logs.length > 1000) logs = logs.slice(0, 1000);
+        
         browserAPI.storage.local.set({ agent_logs: logs });
     });
 }
@@ -237,7 +247,7 @@ browserAPI.webNavigation.onBeforeNavigate.addListener(async (details) => {
         };
 
         if (normalizeUrl(match.url) === normalizeUrl(targetUrlStr)) {
-            console.log(`Exact duplicate found for ${targetUrlStr}. Redirecting focus.`);
+            addLog('DECISION', 'Deduplication', 'success', `Exact duplicate found for ${targetUrlStr}. Redirecting focus.`);
             await browserAPI.tabs.update(match.id, { active: true });
             await browserAPI.windows.update(match.windowId, { focused: true });
             await browserAPI.tabs.remove(details.tabId);
@@ -251,7 +261,7 @@ browserAPI.webNavigation.onBeforeNavigate.addListener(async (details) => {
             
             try {
                 const decision = await callAgentAPI(s.reflexUrl, s.reflexKey, s.reflexModel, systemPrompt, userPrompt);
-                console.log("Reflex Engine Decision:", decision);
+                addLog('DECISION', 'Reflex Engine', 'success', `Decision: ${decision.action} for target: ${targetUrlStr}`);
                 
                 if (decision.action === "REFRESH") {
                     await browserAPI.tabs.update(match.id, { url: targetUrlStr, active: true });
@@ -259,6 +269,7 @@ browserAPI.webNavigation.onBeforeNavigate.addListener(async (details) => {
                     await browserAPI.tabs.remove(details.tabId);
                 }
             } catch (err) {
+                addLog('DECISION', 'Reflex Engine', 'error', `Failed to deduplicate: ${err.message}`);
                 console.error("Reflex Engine Error:", err);
             }
             return;
@@ -267,7 +278,7 @@ browserAPI.webNavigation.onBeforeNavigate.addListener(async (details) => {
         // 4. Free Local Fallback (Single-Instance Domains)
         const isSingleInstance = singleInstanceDomains.some(d => targetUrl.hostname.includes(d));
         if (isSingleInstance) {
-            console.log(`Single-instance domain matched. Updating existing tab ${match.id} to new path.`);
+            addLog('DECISION', 'Local Fallback', 'success', `Single-instance domain matched. Updating tab ${match.id} to new path: ${targetUrlStr}`);
             await browserAPI.tabs.update(match.id, { url: targetUrlStr, active: true });
             await browserAPI.windows.update(match.windowId, { focused: true });
             await browserAPI.tabs.remove(details.tabId);
@@ -487,8 +498,10 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                 tabs: targetTabs.filter(t => group.tabIds.includes(t.id)),
                                 name: group.groupName
                             })).filter(c => c.tabs.length > 0);
+                            addLog('DECISION', 'Cognitive Engine', 'success', `Grouped ${targetTabs.length} tabs into ${clusters.length} categories.`);
                         }
                     } catch (err) {
+                        addLog('DECISION', 'Cognitive Engine', 'error', `Failed to group: ${err.message}. Falling back to local math.`);
                         console.error("Cognitive Engine failed, falling back to local math:", err);
                     }
                 }
@@ -496,6 +509,7 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 // 2. Free Local Fallback (if Agent fails or isn't configured)
                 if (!clusters) {
                     clusters = await clusterTabs(targetTabs);
+                    addLog('DECISION', 'Local Fallback', 'success', `Used text embeddings to group ${targetTabs.length} tabs into ${clusters.length} categories.`);
                 }
 
                 await applyClustersToTabs(clusters);

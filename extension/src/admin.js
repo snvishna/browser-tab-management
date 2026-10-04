@@ -3,6 +3,7 @@ const browserAPI = typeof browser !== "undefined" ? browser : chrome;
 const container = document.getElementById('logs-container');
 
 function renderLogs() {
+    const searchVal = document.getElementById('search-input').value.toLowerCase();
     browserAPI.storage.local.get(['agent_logs'], (res) => {
         const logs = res.agent_logs || [];
         container.innerHTML = '';
@@ -11,7 +12,18 @@ function renderLogs() {
             return;
         }
 
-        logs.forEach(log => {
+        const filteredLogs = logs.filter(log => {
+            if (!searchVal) return true;
+            const fullText = (log.type + ' ' + log.action + ' ' + log.status + ' ' + log.details).toLowerCase();
+            return fullText.includes(searchVal);
+        });
+
+        if (filteredLogs.length === 0) {
+            container.innerHTML = '<div style="color: #8e8e93;">No matching logs found.</div>';
+            return;
+        }
+
+        filteredLogs.forEach(log => {
             const div = document.createElement('div');
             div.className = 'log-entry';
             
@@ -31,6 +43,7 @@ function renderLogs() {
     });
 }
 
+document.getElementById('search-input').addEventListener('input', renderLogs);
 document.getElementById('btn-refresh').addEventListener('click', renderLogs);
 document.getElementById('btn-clear').addEventListener('click', () => {
     browserAPI.storage.local.remove('agent_logs', () => {
