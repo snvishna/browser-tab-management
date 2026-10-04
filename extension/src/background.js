@@ -65,7 +65,10 @@ async function callAgentAPI(baseUrl, apiKey, model, systemPrompt, userPrompt) {
                 decision: {
                     type: "choice",
                     instructions: systemPrompt,
-                    criteria: ["REFRESH", "NEW"]
+                    criteria: {
+                        "REFRESH": "The target URL is highly similar or logically identical to the existing tab, so overwrite it.",
+                        "NEW": "The target URL represents completely different content and should be opened as a new tab."
+                    }
                 }
             }
         };
