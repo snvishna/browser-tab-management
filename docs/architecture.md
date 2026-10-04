@@ -11,11 +11,11 @@ flowchart TD
         B -->|Message Passing| C[Agent Background Script]
         
         subgraph The Reflex Engine (System 1)
-            C <-->|Transformers.js / API| D[Fast Router: Jev / all-MiniLM]
+            C <-->|Lightweight HTTP API| D[Fast Router: Jev / Groq]
         end
         
         subgraph The Cognitive Engine (System 2)
-            C <-->|Prompts API| E[Generative LLM: Gemini / OpenAI]
+            C <-->|Heavy Generative HTTP API| E[Generative LLM: Anthropic / OpenAI]
         end
         
         C -->|Tabs API| F[Native Browser Tab Groups]
@@ -38,8 +38,8 @@ flowchart TD
   - Routes payload data to either the Reflex Engine or Cognitive Engine based on user API key configuration.
 
 ### 3. The Dual-Engine AI System
-- **The Reflex Engine (System 1)**: Runs on every link click. Defaults to local `all-MiniLM-L6-v2` via WebAssembly (Transformers.js) for 0ms cosine-similarity deduplication. Power users can plug in a fast classifier (like Jev or Groq) for highly intelligent, rule-based URL routing.
-- **The Cognitive Engine (System 2)**: Runs on demand. Uses generative LLMs (Gemini, Claude, OpenAI) via API keys to cluster tabs, generate human-readable category names, and process complex grouping logic.
+- **The Reflex Engine (System 1)**: Runs on every link click. Defaults to local exact-match routing and heuristic single-instance domains (`localhost`, etc) for 0ms deduplication. Power users can plug in a fast API classifier (like TypeSafe Jev or Groq) for highly intelligent, semantic URL routing via low-latency HTTP.
+- **The Cognitive Engine (System 2)**: Runs on demand. Uses generative LLMs (Anthropic Claude, OpenAI GPT-4o) via API keys to cluster tabs, generate human-readable category names, and process complex grouping logic. If no API key is provided, falls back to mathematical TF-IDF semantic clustering algorithms running securely inside the service worker context.
 
 ### 4. The 90-Day Lifecycle Log (IndexedDB)
 - **Role:** Persistent infinite-memory cold-storage.
