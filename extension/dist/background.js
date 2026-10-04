@@ -35556,6 +35556,7 @@ var require_background = __commonJS({
     async function callAgentAPI(baseUrl, apiKey, model, systemPrompt, userPrompt) {
       let url2 = baseUrl;
       if (model === "jev-fast") model = "jev-latest";
+      if (model === "claude-3-5-sonnet-20241022") model = "claude-3-5-sonnet-latest";
       const isAnthropic = url2.includes("anthropic.com") || model.startsWith("claude-");
       const isTypesafe = url2.includes("typesafe.ai");
       if (isTypesafe) {

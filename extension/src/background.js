@@ -63,6 +63,7 @@ seedConfig();
 async function callAgentAPI(baseUrl, apiKey, model, systemPrompt, userPrompt) {
     let url = baseUrl;
     if (model === 'jev-fast') model = 'jev-latest'; // Automatically migrate deprecated model string
+    if (model === 'claude-3-5-sonnet-20241022') model = 'claude-3-5-sonnet-latest'; // Fix 404 on unreleased/typo Anthropic model
     
     const isAnthropic = url.includes('anthropic.com') || model.startsWith('claude-');
     const isTypesafe = url.includes('typesafe.ai');
