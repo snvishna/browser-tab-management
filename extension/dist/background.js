@@ -35544,7 +35544,7 @@ var require_background = __commonJS({
               defaultModel = "claude-3-haiku-20240307";
             } else if (config.cognitiveKey && (config.cognitiveKey.startsWith("AIza") || config.cognitiveKey.startsWith("AQ"))) {
               defaultUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-              defaultModel = "gemini-2.0-flash";
+              defaultModel = "gemini-3.8-flash";
             }
             const newSettings = {
               cognitiveKey: config.cognitiveKey || "",

@@ -402,7 +402,7 @@ function autoPopulateFields(key, urlInput, modelInput) {
         if (!modelInput.value || !modelInput.value.startsWith('claude')) modelInput.value = 'claude-3-haiku-20240307';
     } else if (key.startsWith('AIza') || key.startsWith('AQ')) {
         if (!urlInput.value || !urlInput.value.includes('generativelanguage.googleapis.com')) urlInput.value = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
-        if (!modelInput.value || !modelInput.value.startsWith('gemini')) modelInput.value = 'gemini-2.0-flash';
+        if (!modelInput.value || !modelInput.value.startsWith('gemini')) modelInput.value = 'gemini-3.8-flash';
     } else if (key.startsWith('ts-') || key.startsWith('jev-')) {
         if (!urlInput.value || !urlInput.value.includes('api.typesafe.ai')) urlInput.value = 'https://api.typesafe.ai/v1/systemone';
         if (!modelInput.value || !modelInput.value.startsWith('jev')) modelInput.value = 'jev-latest';
@@ -461,7 +461,7 @@ document.getElementById('btn-save-settings').addEventListener('click', () => {
             defaultModel = 'claude-3-haiku-20240307';
         } else if (mainKey.startsWith('AIza') || mainKey.startsWith('AQ')) {
             defaultUrl = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
-            defaultModel = 'gemini-2.0-flash';
+            defaultModel = 'gemini-3.8-flash';
         } else if (mainKey.startsWith('sk-')) {
             defaultUrl = 'https://api.openai.com/v1/chat/completions';
             defaultModel = 'gpt-4o-mini';
