@@ -130,7 +130,7 @@ async function callAgentAPI(baseUrl, apiKey, model, systemPrompt, userPrompt) {
                 'Content-Type': 'application/json',
                 'x-api-key': apiKey,
                 'anthropic-version': '2023-06-01',
-                'anthropic-dangerously-allow-custom-urls': 'true'
+                'anthropic-dangerous-direct-browser-access': 'true'
             },
             body: JSON.stringify(payload)
         });
@@ -247,7 +247,7 @@ browserAPI.webNavigation.onBeforeNavigate.addListener(async (details) => {
         };
 
         if (normalizeUrl(match.url) === normalizeUrl(targetUrlStr)) {
-            addLog('DECISION', 'Deduplication', 'success', `Exact duplicate found for ${targetUrlStr}. Redirecting focus.`);
+            addLog('DECISION', 'Deduplication', 'success', `Exact duplicate found for ${targetUrlStr} (Local Engine). Redirecting focus.`);
             await browserAPI.tabs.update(match.id, { active: true });
             await browserAPI.windows.update(match.windowId, { focused: true });
             await browserAPI.tabs.remove(details.tabId);
