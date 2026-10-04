@@ -252,15 +252,11 @@ function executeItem(item) {
     }
 
     if (shouldClose) {
+        // Snappy feel: Close the palette immediately so the user isn't blocked 
+        // while the background thread handles the AI network requests.
+        closeUI();
         if (promise && typeof promise.then === 'function') {
-            promise.then(() => {
-                closeUI();
-            }).catch(e => {
-                console.error(e);
-                closeUI();
-            });
-        } else {
-            closeUI();
+            promise.catch(e => console.error(e));
         }
     }
 }

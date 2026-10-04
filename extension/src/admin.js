@@ -30,14 +30,29 @@ function renderLogs() {
             const time = new Date(log.timestamp).toLocaleTimeString();
             const typeClass = log.status === 'error' ? 'type-error' : (log.status === 'success' ? 'type-success' : 'type-pending');
             
-            div.innerHTML = `
-                <div>
-                    <span class="log-time">[${time}]</span>
-                    <span class="log-type ${typeClass}">${log.status.toUpperCase()}</span>
-                    <strong>${log.type} - ${log.action}</strong>
-                </div>
-                <div class="log-details">${log.details}</div>
-            `;
+            const headerDiv = document.createElement('div');
+            
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'log-time';
+            timeSpan.textContent = `[${time}] `;
+            
+            const typeSpan = document.createElement('span');
+            typeSpan.className = `log-type ${typeClass}`;
+            typeSpan.textContent = `${log.status.toUpperCase()} `;
+            
+            const titleStrong = document.createElement('strong');
+            titleStrong.textContent = `${log.type} - ${log.action}`;
+            
+            headerDiv.appendChild(timeSpan);
+            headerDiv.appendChild(typeSpan);
+            headerDiv.appendChild(titleStrong);
+            
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'log-details';
+            detailsDiv.textContent = log.details;
+            
+            div.appendChild(headerDiv);
+            div.appendChild(detailsDiv);
             container.appendChild(div);
         });
     });
