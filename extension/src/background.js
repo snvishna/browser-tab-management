@@ -5,25 +5,29 @@ import { PROMPTS } from './prompts.js';
 // Unified browser API access
 const browserAPI = typeof browser !== "undefined" ? browser : chrome;
 
+let logMutex = Promise.resolve();
+
 async function addLog(type, action, status, details) {
     console.log(`[${type}] ${action} (${status}): ${details}`);
     const log = { timestamp: Date.now(), type, action, status, details };
-    browserAPI.storage.local.get(['agent_logs'], (res) => {
-        const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
-        const now = Date.now();
-        let logs = res.agent_logs || [];
-        
-        // Add new log to the beginning
-        logs.unshift(log);
-        
-        // TTL filter (older than 7 days)
-        logs = logs.filter(l => (now - l.timestamp) < SEVEN_DAYS);
-        
-        // Max limit to prevent bloat
-        if (logs.length > 1000) logs = logs.slice(0, 1000);
-        
-        browserAPI.storage.local.set({ agent_logs: logs });
+    
+    logMutex = logMutex.then(() => {
+        return new Promise((resolve) => {
+            browserAPI.storage.local.get(['agent_logs'], (res) => {
+                const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+                const now = Date.now();
+                let logs = res.agent_logs || [];
+                
+                logs.unshift(log);
+                logs = logs.filter(l => (now - l.timestamp) < SEVEN_DAYS);
+                if (logs.length > 1000) logs = logs.slice(0, 1000);
+                
+                browserAPI.storage.local.set({ agent_logs: logs }, resolve);
+            });
+        });
     });
+    
+    await logMutex;
 }
 
 async function seedConfig() {

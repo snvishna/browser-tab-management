@@ -35510,18 +35510,24 @@ var require_background = __commonJS({
     init_db();
     init_prompts();
     var browserAPI = typeof browser !== "undefined" ? browser : chrome;
+    var logMutex = Promise.resolve();
     async function addLog(type, action, status, details) {
       console.log(`[${type}] ${action} (${status}): ${details}`);
       const log = { timestamp: Date.now(), type, action, status, details };
-      browserAPI.storage.local.get(["agent_logs"], (res) => {
-        const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1e3;
-        const now = Date.now();
-        let logs = res.agent_logs || [];
-        logs.unshift(log);
-        logs = logs.filter((l) => now - l.timestamp < SEVEN_DAYS);
-        if (logs.length > 1e3) logs = logs.slice(0, 1e3);
-        browserAPI.storage.local.set({ agent_logs: logs });
+      logMutex = logMutex.then(() => {
+        return new Promise((resolve) => {
+          browserAPI.storage.local.get(["agent_logs"], (res) => {
+            const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1e3;
+            const now = Date.now();
+            let logs = res.agent_logs || [];
+            logs.unshift(log);
+            logs = logs.filter((l) => now - l.timestamp < SEVEN_DAYS);
+            if (logs.length > 1e3) logs = logs.slice(0, 1e3);
+            browserAPI.storage.local.set({ agent_logs: logs }, resolve);
+          });
+        });
       });
+      await logMutex;
     }
     async function seedConfig() {
       try {
