@@ -7,7 +7,7 @@ async function runBuild() {
         bundle: true,
         format: 'esm',
         target: 'esnext',
-        define: { global: 'window' },
+        define: { global: 'globalThis' },
         outdir: 'dist',
     });
 

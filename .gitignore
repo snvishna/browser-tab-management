@@ -5,3 +5,8 @@ __pycache__/
 venv/
 spec.md
 config.json
+tmp/
+*.zip
+.DS_Store
+test.html
+test.js

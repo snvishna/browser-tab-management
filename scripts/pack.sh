@@ -18,7 +18,7 @@ cd ..
 echo "🗜️ Creating Chrome ZIP (tabflow-chrome.zip)..."
 cd extension
 cp manifest.json manifest.bak.json
-node -e "const fs = require('fs'); const m = JSON.parse(fs.readFileSync('manifest.json')); delete m.background.scripts; fs.writeFileSync('manifest.json', JSON.stringify(m, null, 2));"
+node -e "const fs = require('fs'); const m = JSON.parse(fs.readFileSync('manifest.json')); delete m.background.scripts; delete m.browser_specific_settings; fs.writeFileSync('manifest.json', JSON.stringify(m, null, 2));"
 zip -r ../tabflow-chrome.zip . -x "node_modules/*" "*/node_modules/*" ".*" "*.zip" > /dev/null
 
 # 4. Create Firefox ZIP
