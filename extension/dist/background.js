@@ -35520,6 +35520,36 @@ var require_background = __commonJS({
         browserAPI.storage.local.set({ agent_logs: logs });
       });
     }
+    async function seedConfig() {
+      try {
+        const res = await fetch(browserAPI.runtime.getURL("config.json"));
+        if (res.ok) {
+          const config = await res.json();
+          const storage = await browserAPI.storage.local.get(["agentSettings"]);
+          const s = storage.agentSettings || {};
+          if (!s.cognitiveKey) {
+            let defaultUrl = "https://api.openai.com/v1/chat/completions";
+            let defaultModel = "gpt-4o-mini";
+            if (config.cognitiveKey && config.cognitiveKey.startsWith("sk-ant-")) {
+              defaultUrl = "https://api.anthropic.com/v1/messages";
+              defaultModel = "claude-3-haiku-20240307";
+            }
+            const newSettings = {
+              cognitiveKey: config.cognitiveKey || "",
+              cognitiveUrl: config.cognitiveUrl || defaultUrl,
+              cognitiveModel: config.cognitiveModel || defaultModel,
+              reflexKey: config.reflexKey || config.cognitiveKey || "",
+              reflexUrl: config.reflexUrl || config.cognitiveUrl || defaultUrl,
+              reflexModel: config.reflexModel || config.cognitiveModel || defaultModel
+            };
+            await browserAPI.storage.local.set({ agentSettings: newSettings });
+            console.log("[Setup] Seeded API keys from config.json");
+          }
+        }
+      } catch (e) {
+      }
+    }
+    seedConfig();
     async function callAgentAPI(baseUrl, apiKey, model, systemPrompt, userPrompt) {
       let url2 = baseUrl;
       const isAnthropic = url2.includes("anthropic.com") || model.startsWith("claude-");
