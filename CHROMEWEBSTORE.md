@@ -121,3 +121,24 @@ https://github.com/snvishna/tabflow-agent
 
 ### Rejection History
 - N/A
+
+## Privacy Practices Justifications
+
+When submitting to the Chrome Web Store, you will be prompted to provide justifications for the permissions requested in `manifest.json`. You can copy and paste the following responses exactly as written.
+
+### Permission Justifications
+- **activeTab**: "Required to inject the Command Palette overlay (iframe) into the current tab when the user triggers the keyboard shortcut or clicks the extension icon."
+- **alarms**: "Used to periodically trigger background maintenance tasks, specifically checking for and archiving stale tabs that have exceeded the user-configured age threshold."
+- **<all_urls> / host permission**: "Required to inject the Command Palette UI over any webpage the user is currently browsing, and to read the URLs and Titles of all open tabs for AI categorization."
+- **scripting**: "Required to execute the content script (`content.js`) that mounts the Command Palette iframe onto the active webpage."
+- **sessions**: "Required to reliably track tab history and restore tabs from the local IndexedDB archive without losing their session context."
+- **storage**: "Used to persist user settings (like the AI provider choice, API keys, and auto-archive thresholds) and to store the local IndexedDB archive of closed tabs."
+- **tabGroups**: "Required to physically move and group the user's open tabs in the browser window based on the AI's semantic classification."
+- **tabs**: "Required to read the URLs, titles, and IDs of currently open tabs so they can be sent to the AI for categorization and grouping."
+- **webNavigation**: "Used to detect when a user navigates to a new page so the extension can automatically categorize and move the new tab into its correct semantic group in real-time."
+
+### Remote Code Use
+- **Remote Code Justification**: "This extension does not execute arbitrary remote code. However, it does transmit tab URLs and titles to a remote AI API endpoint (Google Gemini or OpenAI) using the user's explicitly provided API key (Bring Your Own Key architecture). No data is collected by the publisher."
+
+### Single Purpose Description
+- **Single Purpose Description**: "TabFlow Agent is an intelligent tab manager that uses AI to automatically categorize, group, and archive open browser tabs."
